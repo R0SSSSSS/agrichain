@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Notifications 🔔</div>
+    <div class="ph-sub">{{ notes|length }} notification{{ 's' if notes|length != 1 }}</div>
+  </div>
+</div>
+
+<div style="max-width:600px">
+  <div class="card">
+    {% if notes %}
+      {% for n in notes %}
+      <div class="notif-item">
+        <div class="notif-icon">🌾</div>
+        <div>
+          <div class="notif-msg">{{ n.message }}</div>
+          <div class="notif-time">Just now</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card-body" style="text-align:center;padding:64px 24px">
+        <div style="font-size:48px;margin-bottom:12px">🔕</div>
+        <div class="font-bold" style="margin-bottom:6px">All caught up!</div>
+        <div class="text-muted text-sm">No new notifications right now</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

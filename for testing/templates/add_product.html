@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Add Product{% endblock %}
+{% block page_title %}Add Product{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">List a New Product 🌱</div>
+    <div class="ph-sub">Add a product to the AgriChain marketplace</div>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+  </a>
+</div>
+
+<div style="max-width:600px">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Product Details</span>
+    </div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Product Name</label>
+          <input class="form-control" id="name" name="name" placeholder="e.g. Fresh Organic Tomatoes" required autofocus>
+        </div>
+
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label" for="quantity">Quantity (units)</label>
+            <input class="form-control" id="quantity" name="quantity" type="number" min="1" placeholder="e.g. 50" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="price">Price (₱)</label>
+            <input class="form-control" id="price" name="price" type="number" step="0.01" min="0" placeholder="e.g. 120.00" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description</label>
+          <textarea class="form-control" id="description" name="description" placeholder="Describe your product — freshness, variety, harvest date, farming method…" rows="4"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Product Photo</label>
+          <div id="dropzone" style="border:2px dashed var(--border);border-radius:var(--r-lg);padding:28px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s" onclick="document.getElementById('imageInput').click()">
+            <div id="dropzone-content">
+              <div style="font-size:32px;margin-bottom:8px">📷</div>
+              <div class="font-bold text-sm">Click to upload photo</div>
+              <div class="text-muted text-xs mt-1">PNG, JPG up to 10MB</div>
+            </div>
+            <img id="preview" src="" alt="" style="display:none;max-width:100%;max-height:200px;border-radius:var(--r-md);margin-top:12px">
+          </div>
+          <input type="file" id="imageInput" name="image" accept="image/*" style="display:none" onchange="previewImage(this)">
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" class="btn btn-primary btn-lg" style="flex:1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Save Product
+          </button>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('dropzone-content').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; dz.style.background = 'var(--green-50)'; });
+dz.addEventListener('dragleave', () => { dz.style.borderColor = ''; dz.style.background = ''; });
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.style.borderColor = ''; dz.style.background = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const input = document.getElementById('imageInput');
+    const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+    previewImage(input);
+  }
+});
+</script>
+{% endblock %}

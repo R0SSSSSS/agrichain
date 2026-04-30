@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Complaints{% endblock %}
+{% block page_title %}Complaints{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Complaints</div>
+    <div class="ph-sub">{{ complaints|length }} submitted concern{{ 's' if complaints|length != 1 }}</div>
+  </div>
+</div>
+
+<div class="grid g2">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Submit Concern</span>
+    </div>
+    <div class="card-body">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label" for="subject">Subject</label>
+          <input class="form-control" id="subject" name="subject" maxlength="150" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="order_id">Related Order</label>
+          <select class="form-control" id="order_id" name="order_id">
+            <option value="">None</option>
+            {% for order in orders %}
+              <option value="{{ order.id }}">
+                #{{ order.id }} - {{ order.product.name if order.product else 'Order' }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="message">Concern</label>
+          <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Submit
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Your Cases</span>
+    </div>
+    {% if complaints %}
+      {% for c in complaints %}
+      <div class="notif-item" style="align-items:flex-start">
+        <div class="notif-icon">!</div>
+        <div style="min-width:0">
+          <div class="font-bold">{{ c.subject }}</div>
+          <div class="text-muted text-sm">{{ c.message }}</div>
+          <div class="flex items-center gap-2 mt-2">
+            {% if c.status == 'Resolved' %}
+              <span class="badge b-green">{{ c.status }}</span>
+            {% elif c.status == 'Dismissed' %}
+              <span class="badge b-gray">{{ c.status }}</span>
+            {% elif c.status == 'In Review' %}
+              <span class="badge b-blue">{{ c.status }}</span>
+            {% else %}
+              <span class="badge b-amber">{{ c.status }}</span>
+            {% endif %}
+            {% if c.order_id %}
+              <span class="badge b-gray">Order #{{ c.order_id }}</span>
+            {% endif %}
+          </div>
+          {% if c.resolution %}
+            <div class="text-sm mt-2"><strong>Resolution:</strong> {{ c.resolution }}</div>
+          {% endif %}
+          <div class="notif-time">{{ c.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card-body" style="text-align:center;padding:48px 24px">
+        <div class="font-bold">No complaints submitted</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
