@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Logistics{% endblock %}
+{% block page_title %}Logistics{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Logistics</div>
+    <div class="ph-sub">Update delivery movement and upload proof for completed orders</div>
+  </div>
+  <a href="{{ url_for('farmer_orders') }}" class="btn btn-secondary">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Orders
+  </a>
+</div>
+
+{% set on_the_way = orders | selectattr('delivery.status', 'equalto', 'Out for Delivery') | list %}
+{% set delivered = orders | selectattr('delivery.status', 'equalto', 'Delivered') | list %}
+<div class="grid g3 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24"><path d="M3 7h11v9H3z"/><path d="M14 10h3l3 3v3h-6z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">On The Way</div>
+      <div class="stat-val">{{ on_the_way|length }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Delivered</div>
+      <div class="stat-val">{{ delivered|length }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon si-amber">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Active Orders</div>
+      <div class="stat-val">{{ orders|length }}</div>
+    </div>
+  </div>
+</div>
+
+{% if orders %}
+<div class="logistics-list">
+  {% for order in orders %}
+    {% set delivery = order.delivery %}
+    {% set unit = order.product.unit or 'unit' %}
+    <div class="card logistics-card">
+      <div class="card-hd">
+        <span class="card-hd-title">Order #{{ order.id }} - {{ order.product.name }}</span>
+        {% if delivery.status == 'Delivered' %}
+          <span class="badge b-green">Delivered</span>
+        {% elif delivery.status == 'Out for Delivery' %}
+          <span class="badge b-blue">On The Way</span>
+        {% elif delivery.status == 'Address Confirmation' %}
+          <span class="badge b-amber">{{ delivery.status }}</span>
+        {% else %}
+          <span class="badge b-gray">{{ delivery.status }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="logistics-grid">
+          <div>
+            <div class="flex items-center gap-3">
+              {% if order.product.image %}
+                <img src="/static/uploads/{{ order.product.image }}" alt="{{ order.product.name }}" class="logistics-product-img">
+              {% else %}
+                <div class="logistics-product-img logistics-product-placeholder">P</div>
+              {% endif %}
+              <div>
+                <div class="font-bold">{{ order.product.name }}</div>
+                <div class="text-muted text-sm">Buyer: {{ order.buyer.username }}</div>
+                <div class="text-muted text-sm">Qty {{ order.quantity|qty }} {{ unit }} | &#8369;{{ "%.2f"|format(order.total_price) }}</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="section-lbl">Delivery Address</div>
+            <div class="font-bold text-sm">{{ delivery.shipping_address }}</div>
+            {% if delivery.contact_number %}
+              <div class="text-muted text-sm mt-1">Contact: {{ delivery.contact_number }}</div>
+            {% endif %}
+            <div class="text-muted text-sm mt-2">{{ delivery.tracking_note }}</div>
+
+            {% if order.delivery_proof %}
+              <div class="divider"></div>
+              <div class="section-lbl">Proof Uploaded</div>
+              <a href="/static/uploads/{{ order.delivery_proof.image }}" target="_blank" rel="noopener">
+                <img src="/static/uploads/{{ order.delivery_proof.image }}" alt="Delivery proof for order #{{ order.id }}" class="delivery-proof-thumb">
+              </a>
+              {% if order.delivery_proof.note %}
+                <div class="text-muted text-sm mt-2">{{ order.delivery_proof.note }}</div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <form method="POST" action="{{ url_for('update_logistics', order_id=order.id) }}" enctype="multipart/form-data" class="logistics-form">
+            <div class="form-group">
+              <label class="form-label" for="proof_note_{{ order.id }}">Logistics Note</label>
+              <textarea id="proof_note_{{ order.id }}" name="proof_note" class="form-control" rows="4" placeholder="Add a delivery note for buyer notifications">{{ delivery.tracking_note }}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="proof_image_{{ order.id }}">Proof of Delivery Photo</label>
+              <input id="proof_image_{{ order.id }}" name="proof_image" class="form-control" type="file" accept="image/*">
+              <div class="form-hint">Required when marking delivered unless proof was already uploaded.</div>
+            </div>
+
+            <div class="flex gap-2">
+              <button class="btn btn-secondary" type="submit" name="action" value="on_the_way">
+                <svg viewBox="0 0 24 24"><path d="M3 7h11v9H3z"/><path d="M14 10h3l3 3v3h-6z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                Still On The Way
+              </button>
+              <button class="btn btn-primary" type="submit" name="action" value="delivered">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Delivered
+              </button>
+            </div>
+            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-ghost mt-3">View synced tracking map</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:64px 24px">
+    <div style="font-size:48px;margin-bottom:12px">Delivery</div>
+    <div class="font-bold" style="font-size:18px;margin-bottom:8px">No approved orders for logistics</div>
+    <div class="text-muted">Approved orders will appear here when they are ready to move.</div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

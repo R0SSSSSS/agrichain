@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Marketplace{% endblock %}
+{% block page_title %}Marketplace{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Fresh from the Farm 🛒</div>
+    <div class="ph-sub">{{ products|length }} product{{ 's' if products|length != 1 }} available</div>
+  </div>
+  {% if current_user.role == 'farmer' %}
+    <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Product
+    </a>
+  {% endif %}
+</div>
+
+{% if products %}
+<div class="product-grid">
+  {% for p in products %}
+  {% set unit = p.unit or 'unit' %}
+  {% set stock_info = availability[p.id] if availability is defined and p.id in availability else none %}
+  {% set stock = stock_info.available if stock_info else (p.quantity or 0) %}
+  {% set rating = rating_summary[p.id] if rating_summary is defined and p.id in rating_summary else none %}
+  <div class="product-card">
+    {% if p.image %}
+      <img class="product-img" src="/static/uploads/{{ p.image }}" alt="{{ p.name }}">
+    {% else %}
+      <div class="product-img-placeholder">🌿</div>
+    {% endif %}
+
+    <div class="product-body">
+      <div class="product-name">{{ p.name }}</div>
+      {% if p.description %}
+        <div class="product-desc">{{ p.description }}</div>
+      {% endif %}
+      <div class="product-meta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        {{ p.farmer.location }}
+      </div>
+      {% if rating and rating.count %}
+        <div class="product-meta">Rating {{ "%.1f"|format(rating.avg) }}/5 from {{ rating.count }} order{{ 's' if rating.count != 1 }}</div>
+      {% endif %}
+      <div class="flex items-center justify-between mt-2">
+        <div class="product-price">&#8369;{{ "%.2f"|format(p.price) }} / {{ unit }}</div>
+        {% if stock <= 0 %}
+          <span class="badge b-red">Out</span>
+        {% elif stock <= 5 %}
+          <span class="badge b-amber">{{ stock|qty }} {{ unit }} left</span>
+        {% else %}
+          <span class="badge b-green">{{ stock|qty }} {{ unit }} left</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="product-ft">
+      {% if stock <= 0 %}
+        <span class="btn btn-secondary btn-sm" style="flex:1;cursor:not-allowed;opacity:.75">Out of Stock</span>
+      {% else %}
+        <a href="{{ url_for('order', product_id=p.id) }}" class="btn btn-primary btn-sm" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+          Buy Now
+        </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:64px 24px">
+    <div style="font-size:56px;margin-bottom:16px">🌾</div>
+    <div class="font-bold" style="font-size:18px;margin-bottom:8px">No products available</div>
+    <div class="text-muted">Check back soon — farmers are adding new products!</div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Farmer Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Good day, {{ current_user.username }} 👨‍🌾</div>
+    <div class="ph-sub">Here's an overview of your farm activity</div>
+  </div>
+  <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Product
+  </a>
+</div>
+
+<!-- Stats row -->
+<div class="grid g3 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Total Earnings</div>
+      <div class="stat-val">₱{{ "%.2f"|format(earnings) }}</div>
+    </div>
+    <div class="stat-note text-success">From approved orders</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Products Listed</div>
+      <div class="stat-val">{{ products|length }}</div>
+    </div>
+    <div class="stat-note text-muted">Active listings</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-amber">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Location</div>
+      <div class="stat-val" style="font-size:16px;font-weight:700">{{ current_user.location }}</div>
+    </div>
+    <div class="stat-note text-muted">Your registered area</div>
+  </div>
+</div>
+
+<!-- Smart insights row -->
+<div class="grid g4 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-amber">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Low Stock</div>
+      <div class="stat-val">{{ smart_summary.low_stock_count }}</div>
+    </div>
+    <div class="stat-note text-muted">Products needing inventory attention</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Quantity Sold</div>
+      <div class="stat-val">{{ smart_summary.total_units_sold|qty }}</div>
+    </div>
+    <div class="stat-note text-muted">Across your listed products</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-red">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Needs Action</div>
+      <div class="stat-val">{{ smart_summary.needs_action_count }}</div>
+    </div>
+    <div class="stat-note text-muted">Products with suggested changes</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Product Revenue</div>
+      <div class="stat-val">&#8369;{{ "%.2f"|format(smart_summary.total_product_revenue) }}</div>
+    </div>
+    <div class="stat-note text-success">From approved product orders</div>
+  </div>
+</div>
+
+<!-- Products table -->
+<div class="card">
+  <div class="card-hd">
+    <span class="card-hd-title">Your Products</span>
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('market_insights') }}" class="btn btn-secondary btn-sm">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+        Market
+      </a>
+      <a href="{{ url_for('add_product') }}" class="btn btn-secondary btn-sm">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New
+      </a>
+    </div>
+  </div>
+
+  {% if products %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Approval</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Price Insight</th>
+          <th>AI Demand</th>
+          <th>Stock</th>
+          <th>Sold</th>
+          <th>Suggested Action</th>
+          <th>Actions</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        {% set unit = p.unit or 'unit' %}
+        {% set insight = product_insights.get(p.id) %}
+        {% set price_info = price_insights.get(p.id) %}
+        {% set stock_info = availability[p.id] if availability is defined and p.id in availability else none %}
+        {% set available_stock = stock_info.available if stock_info else (p.quantity or 0) %}
+        {% set reserved_stock = stock_info.reserved if stock_info else 0 %}
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              {% if p.image %}
+                <img src="/static/uploads/{{ p.image }}" alt="{{ p.name }}"
+                     style="width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid var(--border)">
+              {% else %}
+                <div style="width:40px;height:40px;border-radius:8px;background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--border)">🌿</div>
+              {% endif %}
+              <span class="font-bold">{{ p.name }}</span>
+            </div>
+          </td>
+          <td>
+            {% if p.review.status == 'Approved' %}
+              <span class="badge b-green">Approved</span>
+            {% elif p.review.status == 'Rejected' %}
+              <span class="badge b-red">Rejected</span>
+              {% if p.review.admin_note %}
+                <div class="text-muted text-xs mt-1">{{ p.review.admin_note }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge b-amber">Pending Review</span>
+            {% endif %}
+          </td>
+          <td>
+            {{ p.quantity|qty }} <span class="text-muted text-xs">{{ unit }}</span>
+            <div class="text-muted text-xs">Available {{ available_stock|qty }} {{ unit }}</div>
+            {% if reserved_stock %}
+              <div class="text-muted text-xs">Reserved {{ reserved_stock|qty }} {{ unit }}</div>
+            {% endif %}
+          </td>
+          <td><span class="font-bold text-success">&#8369;{{ "%.2f"|format(p.price) }} / {{ unit }}</span></td>
+          <td>
+            {% if price_info.status == 'Fair Price' %}
+              <span class="badge b-green">{{ price_info.status }}</span>
+            {% elif price_info.status in ['Above Market', 'Below Market'] %}
+              <span class="badge b-amber">{{ price_info.status }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ price_info.status }}</span>
+            {% endif %}
+            <div class="text-muted text-xs mt-1">
+              {{ price_info.suggestion }}
+              {% if price_info.avg_price %}
+                | Avg: &#8369;{{ "%.2f"|format(price_info.avg_price) }} / {{ unit }}
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            {% set demand = demand_predictions.get(p.id, 'Not enough data') %}
+            {% if demand == 'High Demand' %}
+              <span class="badge b-green">{{ demand }}</span>
+            {% elif demand == 'Low Demand' %}
+              <span class="badge b-amber">{{ demand }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ demand }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if insight.stock_status == 'Out of Stock' %}
+              <span class="badge b-red">{{ insight.stock_status }}</span>
+            {% elif insight.stock_status == 'Low Stock' %}
+              <span class="badge b-amber">{{ insight.stock_status }}</span>
+            {% elif insight.stock_status == 'Stable Stock' %}
+              <span class="badge b-blue">{{ insight.stock_status }}</span>
+            {% else %}
+              <span class="badge b-green">{{ insight.stock_status }}</span>
+            {% endif %}
+          </td>
+          <td>{{ insight.units_sold|qty }} <span class="text-muted text-xs">{{ unit }}</span></td>
+          <td>
+            {% if insight.suggested_action in ['Restock product', 'Restock soon'] %}
+              <span class="badge b-red">{{ insight.suggested_action }}</span>
+            {% elif insight.suggested_action in ['Promote product', 'Review price'] %}
+              <span class="badge b-amber">{{ insight.suggested_action }}</span>
+            {% elif insight.suggested_action == 'Maintain supply' %}
+              <span class="badge b-green">{{ insight.suggested_action }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ insight.suggested_action }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <a href="{{ url_for('edit_product', product_id=p.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+              <form method="POST" action="{{ url_for('delete_product', product_id=p.id) }}" style="margin:0" onsubmit="return confirm('Delete this product? Pending orders will be rejected.');">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
+          </td>
+          <td class="text-muted text-sm" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:48px 24px">
+    <div style="font-size:48px;margin-bottom:12px">🌱</div>
+    <div class="font-bold" style="margin-bottom:6px">No products yet</div>
+    <div class="text-muted text-sm" style="margin-bottom:20px">Add your first farm product to start selling</div>
+    <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add First Product</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

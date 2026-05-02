@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Receipt #{{ order.id }}{% endblock %}
+{% block page_title %}Receipt #{{ order.id }}{% endblock %}
+
+{% block content %}
+{% set unit = order.product.unit or 'unit' %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Sales Receipt</div>
+    <div class="ph-sub">Order #{{ order.id }} | Delivered {{ delivery.updated_at.strftime('%b %d, %Y') }}</div>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-secondary">Back</a>
+    <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<div class="receipt-card">
+  <div class="receipt-head">
+    <div>
+      <div class="footer-logo">
+        <span class="footer-logo-mark">A</span>
+        <span>AgriChain</span>
+      </div>
+      <div class="text-muted text-sm mt-2">Cash on Delivery Receipt</div>
+    </div>
+    <div class="receipt-no">
+      <span>Receipt No.</span>
+      <strong>AGR-{{ "%06d"|format(order.id) }}</strong>
+    </div>
+  </div>
+
+  <div class="receipt-grid">
+    <div>
+      <div class="section-lbl">Buyer</div>
+      <div class="font-bold">{{ order.buyer.username }}</div>
+      <div class="text-muted text-sm">{{ delivery.shipping_address }}</div>
+    </div>
+    <div>
+      <div class="section-lbl">Seller</div>
+      <div class="font-bold">{{ order.product.farmer.username }}</div>
+      <div class="text-muted text-sm">{{ order.product.farmer.location }}</div>
+    </div>
+  </div>
+
+  <div class="table-wrap mt-4">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ order.product.name }}</td>
+          <td>{{ order.quantity|qty }} {{ unit }}</td>
+          <td>&#8369;{{ "%.2f"|format(order.product.price) }} / {{ unit }}</td>
+          <td class="font-bold text-success">&#8369;{{ "%.2f"|format(order.total_price) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="receipt-total">
+    <span>Total Paid</span>
+    <strong>&#8369;{{ "%.2f"|format(order.total_price) }}</strong>
+  </div>
+
+  <div class="text-muted text-sm mt-4">Payment Method: {{ order.payment_method }}</div>
+  <div class="text-muted text-sm">Status: {{ delivery.status }}</div>
+</div>
+
+{% endblock %}

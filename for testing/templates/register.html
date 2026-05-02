@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — AgriChain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <div class="auth-logo">🌱</div>
+      <div class="auth-title">Join AgriChain</div>
+      <div class="auth-sub">Create your supply network account</div>
+    </div>
+
+    <div class="auth-body">
+      {% if error %}
+        <div class="alert alert-danger">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>{{ error }}</span>
+        </div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-control" id="username" name="username" placeholder="Choose a username" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-control" id="password" name="password" type="password" placeholder="Create a password" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="location">Location</label>
+          <input class="form-control" id="location" name="location" placeholder="e.g. Quezon City, Philippines">
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px">
+          <label class="form-label">I am a…</label>
+          <div class="radio-group">
+            <label class="radio-card">
+              <input type="radio" name="role" value="farmer" required>
+              <div>
+                <div class="radio-card-label">🌾 Farmer</div>
+                <div class="radio-card-sub">List products and receive orders</div>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="role" value="buyer">
+              <div>
+                <div class="radio-card-label">🛒 Buyer</div>
+                <div class="radio-card-sub">Browse and purchase farm products</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+      </form>
+    </div>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{{ url_for('login') }}">Sign in →</a>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

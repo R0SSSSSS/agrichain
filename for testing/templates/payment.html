@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Place Order{% endblock %}
+{% block page_title %}Place Order{% endblock %}
+
+{% block content %}
+
+{% set unit = product.unit or 'unit' %}
+{% set stock = available_quantity if available_quantity is defined else product.quantity or 0 %}
+{% set default_qty = 1 if stock >= 1 else stock %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Complete Your Order</div>
+    <div class="ph-sub">Cash on Delivery with address confirmation</div>
+  </div>
+  <a href="{{ url_for('marketplace') }}" class="btn btn-secondary">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+  </a>
+</div>
+
+<div style="max-width:560px">
+  <div class="card mb-4">
+    <div class="card-hd"><span class="card-hd-title">Order Summary</span></div>
+    <div class="card-body">
+      <div class="flex items-center gap-4">
+        {% if product.image %}
+          <img src="/static/uploads/{{ product.image }}" alt="{{ product.name }}"
+               style="width:72px;height:72px;border-radius:var(--r-md);object-fit:cover;border:1px solid var(--border)">
+        {% else %}
+          <div style="width:72px;height:72px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:32px;border:1px solid var(--border)">Item</div>
+        {% endif %}
+        <div style="flex:1">
+          <div class="font-bold" style="font-size:16px">{{ product.name }}</div>
+          <div class="text-muted text-sm mt-1">{{ product.description or 'Farm-fresh product' }}</div>
+          <div class="flex items-center gap-2 mt-2">
+            <span style="font-size:20px;font-weight:800;color:var(--accent)">&#8369;{{ "%.2f"|format(product.price) }} / {{ unit }}</span>
+            <span id="lineQuantity" class="text-muted text-sm">x {{ default_qty|qty }} {{ unit }}</span>
+          </div>
+          <div class="text-muted text-xs mt-1">{{ stock|qty }} {{ unit }} available</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="quantity">Order Quantity ({{ unit }})</label>
+        <input id="quantity" name="quantity" form="codOrderForm" class="form-control" type="number"
+               min="0.01" max="{{ stock|qty }}" step="0.01" value="{{ default_qty|qty }}" required>
+        <div class="form-hint">You can order by {{ unit }} depending on how the seller listed this product.</div>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="text-muted">Total to pay</span>
+        <span id="orderTotal" style="font-size:22px;font-weight:800;color:var(--accent)">&#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-hd"><span class="card-hd-title">Delivery and Payment</span></div>
+    <div class="card-body">
+      <form id="codOrderForm" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="shipping_address">Delivery Address</label>
+          <textarea id="shipping_address" name="shipping_address" class="form-control" required
+                    style="min-height:90px;padding-top:10px;resize:vertical">{{ current_user.location }}</textarea>
+          <div class="form-hint">The seller will confirm this address before preparing your order.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="contact_number">Contact Number</label>
+          <input id="contact_number" name="contact_number" class="form-control" placeholder="Optional contact number">
+        </div>
+
+        <div class="form-group" style="margin-bottom:24px">
+          <div class="radio-group">
+            <label class="radio-card">
+              <input type="radio" name="payment" value="COD" checked required>
+              <div>
+                <div class="radio-card-label">Cash on Delivery</div>
+                <div class="radio-card-sub">Pay when your order arrives</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="confirmOrderText">Confirm COD Order - &#8369;{{ "%.2f"|format((product.price or 0) * default_qty) }}</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% if recommended_products %}
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Recommended Products</span>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;gap:16px">
+        {% for item in recommended_products %}
+          <div style="display:flex;gap:14px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:var(--r-md)">
+            {% if item.image %}
+              <img src="/static/uploads/{{ item.image }}" alt="{{ item.name }}"
+                   style="width:64px;height:64px;border-radius:var(--r-md);object-fit:cover;border:1px solid var(--border)">
+            {% else %}
+              <div style="width:64px;height:64px;border-radius:var(--r-md);background:var(--green-50);display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--border)">
+                Item
+              </div>
+            {% endif %}
+
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:15px">{{ item.name }}</div>
+              <div class="text-muted text-sm mt-1">
+                {{ item.description or 'Fresh agricultural product available.' }}
+              </div>
+              <div class="mt-2" style="font-weight:800;color:var(--accent)">
+                &#8369;{{ "%.2f"|format(item.price) }} / {{ item.unit or 'unit' }}
+              </div>
+              <div class="text-muted text-xs mt-1">{{ (item.quantity or 0)|qty }} {{ item.unit or 'unit' }} available</div>
+              <div class="mt-2">
+                <a href="{{ url_for('order', product_id=item.id) }}" class="btn btn-secondary">
+                  View Product
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const orderQuantityInput = document.getElementById('quantity');
+const orderTotal = document.getElementById('orderTotal');
+const confirmOrderText = document.getElementById('confirmOrderText');
+const lineQuantity = document.getElementById('lineQuantity');
+const unitPrice = Number('{{ product.price or 0 }}');
+const availableStock = Number('{{ available_quantity if available_quantity is defined else (product.quantity or 0) }}');
+const sellingUnit = {{ (product.unit or 'unit')|tojson }};
+
+function formatOrderQuantity(value) {
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+}
+
+function updateOrderTotal() {
+  if (!orderQuantityInput) return;
+  const rawQuantity = Number(orderQuantityInput.value || 0);
+  const quantity = Math.max(0, Math.min(rawQuantity, availableStock));
+  const total = unitPrice * quantity;
+  const amount = total.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+
+  if (orderTotal) orderTotal.textContent = amount;
+  if (confirmOrderText) confirmOrderText.textContent = `Confirm COD Order - ${amount}`;
+  if (lineQuantity) lineQuantity.textContent = `x ${formatOrderQuantity(quantity)} ${sellingUnit}`;
+}
+
+if (orderQuantityInput) {
+  orderQuantityInput.addEventListener('input', updateOrderTotal);
+  updateOrderTotal();
+}
+</script>
+{% endblock %}

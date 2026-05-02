@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Orders Received{% endblock %}
+{% block page_title %}Orders Received{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Orders for Your Products 📦</div>
+    <div class="ph-sub">Review and approve incoming orders</div>
+  </div>
+  {% set pending = orders | selectattr('status', 'equalto', 'Pending') | list %}
+  {% if pending %}
+    <span class="badge b-amber" style="font-size:13px;padding:6px 14px">{{ pending|length }} pending</span>
+  {% endif %}
+</div>
+
+{% if orders %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Buyer</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Stock Left</th>
+          <th>Total</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Tracking</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        {% set unit = o.product.unit or 'unit' %}
+        {% set stock_info = availability[o.product.id] if availability is defined and o.product.id in availability else none %}
+        {% set available_stock = stock_info.available if stock_info else (o.product.quantity or 0) %}
+        {% set reserved_stock = stock_info.reserved if stock_info else 0 %}
+        <tr>
+          <td>
+            <div class="flex items-center gap-2">
+              <div class="avatar av-sm">{{ o.buyer.username[0].upper() }}</div>
+              <span class="font-bold text-sm">{{ o.buyer.username }}</span>
+            </div>
+          </td>
+          <td>{{ o.product.name }}</td>
+          <td>{{ o.quantity|qty }} {{ unit }}</td>
+          <td>
+            {% set stock = available_stock %}
+            {% if stock <= 0 %}
+              <span class="badge b-red">Out</span>
+            {% elif stock <= 5 %}
+              <span class="badge b-amber">{{ stock|qty }} {{ unit }} left</span>
+            {% else %}
+              <span class="badge b-green">{{ stock|qty }} {{ unit }} left</span>
+            {% endif %}
+            {% if reserved_stock %}
+              <div class="text-muted text-xs mt-1">{{ reserved_stock|qty }} {{ unit }} reserved</div>
+            {% endif %}
+          </td>
+          <td class="font-bold text-success">₱{{ "%.2f"|format(o.total_price) }}</td>
+          <td><span class="badge b-gray">{{ o.payment_method }}</span></td>
+          <td>
+            {% if o.status == 'Pending' %}
+              <span class="badge b-amber">Pending</span>
+            {% elif o.status == 'Approved' %}
+              <span class="badge b-green">Approved</span>
+            {% elif o.status in ['Cancelled', 'Rejected'] %}
+              <span class="badge b-red">{{ o.status }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ o.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if o.status in ['Cancelled', 'Rejected'] %}
+              <span class="badge b-red">{{ o.status }}</span>
+            {% elif o.delivery.status == 'Delivered' %}
+              <span class="badge b-green">{{ o.delivery.status }}</span>
+            {% elif o.delivery.status == 'Out for Delivery' %}
+              <span class="badge b-blue">{{ o.delivery.status }}</span>
+            {% elif o.delivery.status == 'Address Confirmation' %}
+              <span class="badge b-amber">{{ o.delivery.status }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ o.delivery.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if o.status == 'Pending' %}
+              <div class="flex items-center gap-2">
+                <form method="POST" action="{{ url_for('approve_order', order_id=o.id) }}" style="margin:0">
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Approve
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('reject_order', order_id=o.id) }}" style="margin:0" onsubmit="return confirm('Reject this order?');">
+                  <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                </form>
+                <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-secondary btn-sm">Chat</a>
+              </div>
+            {% else %}
+              <div class="flex items-center gap-2">
+                <a href="{{ url_for('order_detail', order_id=o.id) }}" class="btn btn-secondary btn-sm">Manage</a>
+                <a href="{{ url_for('logistics') }}" class="btn btn-primary btn-sm">Logistics</a>
+                {% if o.delivery.status == 'Delivered' %}
+                  <a href="{{ url_for('order_receipt', order_id=o.id) }}" class="btn btn-secondary btn-sm">Receipt</a>
+                {% endif %}
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body" style="text-align:center;padding:64px 24px">
+    <div style="font-size:56px;margin-bottom:16px">📭</div>
+    <div class="font-bold" style="font-size:18px;margin-bottom:8px">No orders yet</div>
+    <div class="text-muted" style="margin-bottom:20px">Orders from buyers will appear here once placed</div>
+    <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add a Product</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

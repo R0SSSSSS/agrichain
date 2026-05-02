@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Analytics</div>
+    <div class="ph-sub">Platform sales and order overview</div>
+  </div>
+</div>
+
+<div class="grid g2 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Total Sales</div>
+      <div class="stat-val">&#8369;{{ "%.2f"|format(total_sales) }}</div>
+    </div>
+    <div class="stat-note text-success">From all approved orders</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Total Orders</div>
+      <div class="stat-val">{{ total_orders }}</div>
+    </div>
+    <div class="stat-note text-muted">All time</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hd"><span class="card-hd-title">Sales Report by Product</span></div>
+  {% if market_rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Orders</th>
+          <th>Quantity Sold</th>
+          <th>Available Stock</th>
+          <th>Demand Trend</th>
+          <th>Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in market_rows %}
+        <tr>
+          <td>
+            <div class="font-bold">{{ row.name }}</div>
+            <div class="text-muted text-xs">Avg price: &#8369;{{ "%.2f"|format(row.avg_price) }} / {{ row.unit }}</div>
+          </td>
+          <td>{{ row.order_count }}</td>
+          <td>{{ row.units_sold|qty }} {{ row.unit }}</td>
+          <td>{{ row.total_stock|qty }} {{ row.unit }}</td>
+          <td>
+            {% if row.demand_trend == 'High Demand' %}
+              <span class="badge b-green">{{ row.demand_trend }}</span>
+            {% elif row.demand_trend == 'Active Demand' %}
+              <span class="badge b-blue">{{ row.demand_trend }}</span>
+            {% else %}
+              <span class="badge b-gray">{{ row.demand_trend }}</span>
+            {% endif %}
+          </td>
+          <td><span class="font-bold text-success">&#8369;{{ "%.2f"|format(row.approved_revenue) }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:40px 24px">
+    <div class="font-bold">No sales data yet</div>
+    <div class="text-muted text-sm mt-1">Orders will appear here once buyers start purchasing products.</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
