@@ -1,2 +1,2 @@
 # agrichain
-Agrichain
+Agrichain 1.2
