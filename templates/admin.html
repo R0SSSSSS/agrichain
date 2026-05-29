@@ -1,0 +1,775 @@
+{% extends 'base.html' %}
+{% block title %}Admin Workspace{% endblock %}
+{% block page_title %}Admin Workspace{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Admin Workspace</div>
+    <div class="ph-sub">Products, reports, complaints, and platform notices</div>
+  </div>
+  <div class="admin-ph-nav">
+    <a href="#products" class="btn btn-secondary btn-sm">Products</a>
+    <a href="#reports" class="btn btn-secondary btn-sm">Reports</a>
+    <a href="#complaints" class="btn btn-secondary btn-sm">Complaints</a>
+    <a href="#users" class="btn btn-secondary btn-sm">Users</a>
+    <a href="#notifications" class="btn btn-secondary btn-sm">Notify</a>
+  </div>
+</div>
+<style>
+/* ── Prevent horizontal viewport overflow on mobile ── */
+html, body {
+  overflow-x: hidden;
+}
+
+@media (min-width: 600px) {
+  .action-cell { min-width: 280px; }
+  .action-cell-sm { min-width: 260px; }
+  .action-cell-lg { min-width: 300px; }
+}
+
+/* ── Admin page-header quick-jump buttons ── */
+.admin-ph-nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;        /* wraps naturally on all sizes */
+  align-items: center;
+}
+.admin-ph-nav .btn {
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  min-height: 34px;
+}
+/* On mobile: full-width row, all 5 buttons in a 3+2 grid */
+@media (max-width: 599px) {
+  .admin-ph-nav {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);  /* 3 per row */
+    gap: 6px;
+  }
+  .admin-ph-nav .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 7px 4px;
+    min-height: 36px;
+    border-radius: 12px;
+  }
+}
+</style>
+
+<div class="grid g4 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-amber">
+      <svg viewBox="0 0 24 24">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <path d="M3 6h18" />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Pending Products</div>
+      <div class="stat-val">{{ report.pending_products }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Sales</div>
+      <div class="stat-val">&#8369;{{ "%.2f"|format(report.total_sales) }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Orders</div>
+      <div class="stat-val">{{ report.total_orders }}</div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon si-red">
+      <svg viewBox="0 0 24 24">
+        <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z" />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Open Complaints</div>
+      <div class="stat-val">{{ report.open_complaints }}</div>
+    </div>
+  </div>
+</div>
+
+{# ── AI Intelligence Panel ── Chart.js visual dashboard ─────────────────── #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+/* ── AI chart grid responsive layout ── */
+#ai-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid #e2e8f0;
+}
+.ai-chart-col {
+  padding: 20px 16px;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+.ai-chart-col:last-child { border-right: none; }
+.ai-chart-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+/* Tablet → 2-col donuts + full-width bar */
+@media (max-width: 860px) {
+  #ai-charts-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .ai-chart-col:nth-child(2) { border-right: none !important; }
+  .ai-chart-col:nth-child(1),
+  .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
+  .ai-chart-col:last-child {
+    grid-column: 1 / -1;
+    border-bottom: none;
+  }
+}
+/* Mobile → 2-col donuts compact, bar full-width below */
+@media (max-width: 599px) {
+  #ai-charts-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .ai-chart-col {
+    padding: 14px 10px !important;
+    border-right: 1px solid #e2e8f0;
+  }
+  .ai-chart-col:nth-child(2) { border-right: none !important; }
+  .ai-chart-col:nth-child(1),
+  .ai-chart-col:nth-child(2) { border-bottom: 1px solid #e2e8f0; }
+  .ai-chart-col:last-child {
+    grid-column: 1 / -1 !important;
+    border-right: none !important;
+    border-bottom: none;
+    padding: 14px 16px !important;
+  }
+  .ai-chart-lbl { font-size: 10px; margin-bottom: 8px; }
+}
+</style>
+
+<div class="card mb-6" id="ai-admin-panel">
+  <div class="card-hd" style="flex-wrap:wrap;gap:10px">
+    <span class="card-hd-title"> AI Intelligence Dashboard</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+      <span id="ai-status-dot" class="badge b-gray" style="font-size:11px">Checking AI…</span>
+      <span style="font-size:11px;color:#64748b">XGBoost v2</span>
+    </div>
+  </div>
+
+  {# Loading state #}
+  <div id="ai-loading-state" class="card-body" style="text-align:center;padding:40px">
+    <div style="font-size:32px;margin-bottom:8px">⏳</div>
+    <div style="font-size:13px;color:#64748b">Running AI analysis on pending orders…</div>
+  </div>
+
+  {# Charts — revealed after data loads #}
+  <div id="ai-charts-state" style="display:none">
+    <div id="ai-charts-grid">
+
+      {# Donut 1: Order Risk #}
+      <div class="ai-chart-col">
+        <div class="ai-chart-lbl">Order Risk Breakdown</div>
+        <div style="position:relative;width:min(120px,100%);margin:0 auto 10px">
+          <canvas id="chart-risk" width="120" height="120" style="width:120px;height:120px;display:block"></canvas>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+            <div id="ai-risk-center" class="font-bold" style="font-size:22px;line-height:1;color:#0f172a">—</div>
+            <div style="font-size:10px;color:#64748b;margin-top:2px">high risk</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;font-size:11px;color:#334155;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0;display:inline-block"></span>High Risk</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block"></span>Safe</span>
+        </div>
+      </div>
+
+      {# Donut 2: Complaint Risk #}
+      <div class="ai-chart-col">
+        <div class="ai-chart-lbl">Complaint Likelihood</div>
+        <div style="position:relative;width:min(120px,100%);margin:0 auto 10px">
+          <canvas id="chart-complaint" width="120" height="120" style="width:120px;height:120px;display:block"></canvas>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+            <div id="ai-complaint-center" class="font-bold" style="font-size:22px;line-height:1;color:#0f172a">—</div>
+            <div style="font-size:10px;color:#64748b;margin-top:2px">at risk</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;font-size:11px;color:#334155;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#f59e0b;flex-shrink:0;display:inline-block"></span>Likely</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block"></span>Low Risk</span>
+        </div>
+      </div>
+
+      {# Bar + stats: Avg Risk #}
+      <div class="ai-chart-col">
+        <div class="ai-chart-lbl">Avg Risk Score</div>
+        <div style="position:relative;width:100%;max-width:240px;height:70px;margin:0 auto">
+          <canvas id="chart-avgrisk"></canvas>
+        </div>
+        <div id="ai-avgrisk-label" class="font-bold" style="font-size:16px;margin-top:10px;color:#0f172a">—</div>
+        <div style="margin-top:14px;font-size:12px;color:#64748b;display:grid;gap:7px;text-align:left">
+          <div style="display:flex;justify-content:space-between">
+            <span>Pending orders</span>
+            <span id="ai-pending-count" class="font-bold" style="color:#0f172a">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Model</span>
+            <span class="font-bold" style="color:#16a34a">XGBoost v2</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Engine status</span>
+            <span id="ai-stat-status" class="font-bold" style="color:#64748b">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {# Empty state #}
+  <div id="ai-empty-state" style="display:none;text-align:center;padding:40px 24px">
+    <div style="font-size:40px;margin-bottom:8px">✅</div>
+    <div class="font-bold" style="color:#0f172a;font-size:15px">No pending orders to analyse</div>
+    <div style="font-size:12px;color:#64748b;margin-top:6px">AI will flag high-risk orders as they come in</div>
+  </div>
+</div>
+
+<section id="products" class="mb-6">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Manage Products</span>
+      <span class="badge b-gray">{{ products|length }} listings</span>
+    </div>
+    {% if products %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Farmer</th>
+            <th>Stock</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Review</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          {% set unit = p.unit or 'unit' %}
+          <tr>
+            <td data-label="Product">
+              <div class="flex items-center gap-3">
+                {% if p.image %}
+                <img src="/static/uploads/{{ p.image }}" alt="{{ p.name }}"
+                  style="width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid var(--border)">
+                {% else %}
+                <div
+                  style="width:42px;height:42px;border-radius:8px;background:var(--green-50);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">
+                  P</div>
+                {% endif %}
+                <div>
+                  <div class="font-bold">{{ p.name }}</div>
+                  <div class="text-muted text-xs"
+                    style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description
+                    or 'No description' }}</div>
+                </div>
+              </div>
+            </td>
+            <td data-label="Farmer">
+              <div class="font-bold text-sm">{{ p.farmer.username if p.farmer else 'Unknown' }}</div>
+              <div class="text-muted text-xs">{{ p.farmer.location if p.farmer else '' }}</div>
+            </td>
+            <td data-label="Stock">{{ p.quantity|qty }} {{ unit }}</td>
+            <td class="font-bold text-success" data-label="Price">&#8369;{{ "%.2f"|format(p.price) }} / {{ unit }}</td>
+            <td data-label="Status">
+              {% if p.is_deleted %}
+              <span class="badge b-red">Deleted</span>
+              {% elif p.review.status == 'Approved' %}
+              <span class="badge b-green">Approved</span>
+              {% elif p.review.status == 'Rejected' %}
+              <span class="badge b-red">Rejected</span>
+              {% else %}
+              <span class="badge b-amber">Pending</span>
+              {% endif %}
+              {% if p.review.reviewed_at %}
+              <div class="text-muted text-xs mt-1">{{ p.review.reviewed_at.strftime('%b %d, %Y') }}</div>
+              {% endif %}
+            </td>
+            <td class="action-cell" data-label="Review">
+              {% if p.is_deleted %}
+              <span class="text-muted text-sm">Removed by seller</span>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin_review_product', product_id=p.id) }}" style="margin:0">
+                <textarea class="form-control" name="admin_note" rows="2"
+                  placeholder="Review note">{{ p.review.admin_note or '' }}</textarea>
+                <div class="flex gap-2 mt-2">
+                  <button class="btn btn-primary btn-sm" type="submit" name="action" value="approve">Approve</button>
+                  <button class="btn btn-secondary btn-sm" type="submit" name="action" value="reject">Reject</button>
+                </div>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;padding:40px 24px">
+      <div class="font-bold">No products yet</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="reports" class="mb-6">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">View Reports</span>
+      <a href="{{ url_for('admin_download_report') }}" class="btn btn-secondary btn-sm">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v12" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M5 21h14" />
+        </svg>
+        Download CSV
+      </a>
+    </div>
+    <div class="grid g4" style="padding:16px">
+      <div>
+        <div class="stat-lbl">Approved Orders</div>
+        <div class="font-bold">{{ report.approved_orders }}</div>
+      </div>
+      <div>
+        <div class="stat-lbl">Pending Orders</div>
+        <div class="font-bold">{{ report.pending_orders }}</div>
+      </div>
+      <div>
+        <div class="stat-lbl">Product Types</div>
+        <div class="font-bold">{{ report.market_summary.product_types }}</div>
+      </div>
+      <div>
+        <div class="stat-lbl">High Demand</div>
+        <div class="font-bold">{{ report.market_summary.high_demand_count }}</div>
+      </div>
+    </div>
+    {% if report.market_rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Orders</th>
+            <th>Quantity Sold</th>
+            <th>Stock</th>
+            <th>Demand</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in report.market_rows %}
+          <tr>
+            <td data-label="Product">
+              <div class="font-bold">{{ row.name }}</div>
+              <div class="text-muted text-xs">Avg &#8369;{{ "%.2f"|format(row.avg_price) }} / {{ row.unit }}</div>
+            </td>
+            <td data-label="Orders">{{ row.order_count }}</td>
+            <td data-label="Quantity Sold">{{ row.units_sold|qty }} {{ row.unit }}</td>
+            <td data-label="Stock">{{ row.total_stock|qty }} {{ row.unit }}</td>
+            <td data-label="Demand">
+              {% if row.demand_trend == 'High Demand' %}
+              <span class="badge b-green">{{ row.demand_trend }}</span>
+              {% elif row.demand_trend == 'Active Demand' %}
+              <span class="badge b-blue">{{ row.demand_trend }}</span>
+              {% else %}
+              <span class="badge b-gray">{{ row.demand_trend }}</span>
+              {% endif %}
+            </td>
+            <td class="font-bold text-success" data-label="Revenue">&#8369;{{ "%.2f"|format(row.approved_revenue) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;padding:40px 24px">
+      <div class="font-bold">No report data yet</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="complaints" class="mb-6">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Handle Complaints</span>
+      <span class="badge b-gray">{{ complaints|length }} cases</span>
+    </div>
+    {% if complaints %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th>User</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Resolution</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td class="action-cell-sm" data-label="Concern">
+              <div class="font-bold">{{ c.subject }}</div>
+              <div class="text-muted text-sm">{{ c.message }}</div>
+              <div class="text-muted text-xs mt-1">{{ c.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+            </td>
+            <td data-label="User">
+              <div class="font-bold text-sm">{{ c.user.username if c.user else 'Unknown' }}</div>
+              <div class="text-muted text-xs">{{ c.user.role|capitalize if c.user else '' }}</div>
+            </td>
+            <td data-label="Order">
+              {% if c.order %}
+              <a href="{{ url_for('order_detail', order_id=c.order.id) }}" class="btn btn-secondary btn-sm">#{{
+                c.order.id }}</a>
+              {% else %}
+              <span class="text-muted">None</span>
+              {% endif %}
+            </td>
+            <td data-label="Status">
+              {% if c.status == 'Resolved' %}
+              <span class="badge b-green">{{ c.status }}</span>
+              {% elif c.status == 'Dismissed' %}
+              <span class="badge b-gray">{{ c.status }}</span>
+              {% elif c.status == 'In Review' %}
+              <span class="badge b-blue">{{ c.status }}</span>
+              {% else %}
+              <span class="badge b-amber">{{ c.status }}</span>
+              {% endif %}
+            </td>
+            <td class="action-cell-lg" data-label="Resolution">
+              <form method="POST" action="{{ url_for('admin_update_complaint', complaint_id=c.id) }}" style="margin:0">
+                <select class="form-control" name="status">
+                  {% for status in complaint_statuses %}
+                  <option value="{{ status }}" {{ 'selected' if c.status==status else '' }}>{{ status }}</option>
+                  {% endfor %}
+                </select>
+                <textarea class="form-control mt-2" name="resolution" rows="2"
+                  placeholder="Resolution">{{ c.resolution or '' }}</textarea>
+                <button class="btn btn-primary btn-sm mt-2" type="submit">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="text-align:center;padding:40px 24px">
+      <div class="font-bold">No complaints submitted</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="users" class="mb-6">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">User Management</span>
+      <span class="badge b-gray">{{ users|length }} accounts</span>
+    </div>
+    {% if users %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td data-label="User">
+              <div class="flex items-center gap-2">
+                <div class="avatar av-sm">{{ u.username[0].upper() }}</div>
+                <span class="font-bold text-sm">{{ u.username }}</span>
+              </div>
+            </td>
+            <td data-label="Role">{{ u.role|capitalize }}</td>
+            <td class="text-muted text-sm" data-label="Location">{{ u.location }}</td>
+            <td data-label="Status">
+              {% if u.role == 'admin' %}
+              <span class="badge b-blue">Admin</span>
+              {% elif u.disabled %}
+              <span class="badge b-red">Suspended</span>
+              {% else %}
+              <span class="badge b-green">Active</span>
+              {% endif %}
+            </td>
+            <td data-label="Action">
+              {% if u.role != 'admin' %}
+              <form method="POST" action="{{ url_for('admin_update_user_status', user_id=u.id) }}" style="margin:0">
+                {% if u.disabled %}
+                <button type="submit" name="action" value="activate" class="btn btn-primary btn-sm">Reactivate</button>
+                {% else %}
+                <button type="submit" name="action" value="suspend" class="btn btn-danger btn-sm">Suspend</button>
+                {% endif %}
+              </form>
+              {% else %}
+              <span class="text-muted text-sm">Protected</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="notifications">
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-hd-title">Manage Notifications</span>
+      <span class="badge b-gray">{{ notification_recipient_count }} recipients</span>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin_send_notification') }}">
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label" for="audience">Audience</label>
+            <select class="form-control" id="audience" name="audience" required>
+              <option value="all">All users</option>
+              <option value="farmers">Farmers</option>
+              <option value="buyers">Buyers</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="notification_type">Type</label>
+            <select class="form-control" id="notification_type" name="notification_type" required>
+              <option value="Announcement">Announcement</option>
+              <option value="Reminder">Reminder</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="message">Message</label>
+          <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <svg viewBox="0 0 24 24">
+            <path d="M22 2L11 13" />
+            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
+          Send
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block scripts %}
+{# JSON data island: application/json is ignored by IDE JS linter but rendered by Jinja2 #}
+<script type="application/json" id="ai-order-data">
+[
+  {% for o in orders if o.status == 'Pending' %}
+  {
+    "product":   {{ o.product.name | tojson }},
+    "total":     {{ o.total_price or 0 }},
+    "payment":   {{ o.payment_method | tojson }},
+    "farmerLoc": {{ (o.product.farmer.location if o.product.farmer else '') | tojson }},
+    "buyerLoc":  {{ (o.buyer.location if o.buyer else '') | tojson }},
+    "price":     {{ o.product.price or 0 }},
+    "qty":       {{ o.quantity or 1 }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+]
+</script>
+<script>
+  /* ── Admin AI Intelligence Chart Dashboard ───────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', async function () {
+    const dot = document.getElementById('ai-status-dot');
+    const statStatus = document.getElementById('ai-stat-status');
+    const loadingEl = document.getElementById('ai-loading-state');
+    const chartsEl = document.getElementById('ai-charts-state');
+    const emptyEl = document.getElementById('ai-empty-state');
+
+    function makeDonut(id, data, colors) {
+      return new Chart(document.getElementById(id), {
+        type: 'doughnut',
+        data: {
+          labels: data.labels,
+          datasets: [{ data: data.values, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }]
+        },
+        options: {
+          responsive:          false,   /* use canvas width/height attrs */
+          maintainAspectRatio: true,
+          cutout:              '68%',
+          animation:           { animateRotate: true, duration: 900 },
+          plugins: {
+            legend:  { display: false },
+            tooltip: { enabled: true }
+          }
+        }
+      });
+    }
+
+    function makeBar(id, pct) {
+      const color = pct > 60 ? '#ef4444' : pct > 35 ? '#f59e0b' : '#22c55e';
+      return new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: {
+          labels: ['Safe', 'Risk'],
+          datasets: [{
+            data:            [Math.max(0, 100 - pct), pct],
+            backgroundColor: ['#e2e8f0', color],
+            borderRadius:    6,
+            borderWidth:     0
+          }]
+        },
+        options: {
+          responsive:          true,   /* fills the column width */
+          maintainAspectRatio: false,
+          indexAxis:           'y',
+          animation:           { duration: 900 },
+          scales: {
+            x: { max: 100, display: false, stacked: true },
+            y: { display: false,           stacked: true }
+          },
+          plugins: {
+            legend:  { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.dataIndex === 1 ? ` Risk: ${pct}%` : '' } }
+          }
+        }
+      });
+    }
+
+    /* ── 1. Check AI health ── */
+    try {
+      const res = await fetch('/api/v1/ai/status');
+      const { ai_ready } = await res.json();
+      if (ai_ready) {
+        dot.textContent = '🟢 AI Online';
+        dot.className = 'badge b-green';
+        if (statStatus) { statStatus.textContent = '✓ Ready'; statStatus.style.color = 'var(--accent)'; }
+      } else {
+        dot.textContent = '🔴 AI Offline';
+        dot.className = 'badge b-red';
+        if (statStatus) statStatus.textContent = '× Not loaded';
+        loadingEl.innerHTML = '<div style="font-size:32px;margin-bottom:8px">❌</div><div class="text-sm">AI models are not loaded. Restart the server.</div>';
+        return;
+      }
+    } catch (e) {
+      dot.textContent = '⚠️ Unreachable';
+      dot.className = 'badge b-amber';
+      loadingEl.innerHTML = '<div style="font-size:32px;margin-bottom:8px">⚠️</div><div class="text-sm">Could not reach AI service.</div>';
+      return;
+    }
+
+    /* ── 2. Load pending order data from JSON data island ── */
+    const pendingOrders = JSON.parse(
+      document.getElementById('ai-order-data').textContent
+    );
+
+    const pendingCount = pendingOrders.length;
+    document.getElementById('ai-pending-count').textContent = pendingCount;
+
+    if (pendingCount === 0) {
+      loadingEl.style.display = 'none';
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    /* ── 3. Parallel risk + complaint checks ── */
+    const riskChecks = pendingOrders.map(o =>
+      fetch('/api/v1/ai/check-risk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_name: o.product, farmer_location: o.farmerLoc,
+          buyer_location: o.buyerLoc, unit_price: o.price,
+          quantity: o.qty, total_price: o.total, payment_method: o.payment
+        })
+      }).then(r => r.json()).catch(() => null)
+    );
+
+    const complaintChecks = pendingOrders.map(o =>
+      fetch('/api/v1/ai/check-complaint', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_name: o.product, total_price: o.total,
+          payment_method: o.payment, delivery_days: 3
+        })
+      }).then(r => r.json()).catch(() => null)
+    );
+
+    const [riskResults, complaintResults] = await Promise.all([
+      Promise.all(riskChecks),
+      Promise.all(complaintChecks)
+    ]);
+
+    /* ── 4. Tally results ── */
+    const highRisk = riskResults.filter(r => r && r.is_risk === 1).length;
+    const safeRisk = pendingCount - highRisk;
+    const compRisk = complaintResults.filter(r => r && r.will_complain === 1).length;
+    const compSafe = pendingCount - compRisk;
+    const riskProbs = riskResults.filter(r => r).map(r => r.risk_probability || 0);
+    const avgRiskPct = riskProbs.length
+      ? Math.round((riskProbs.reduce((a, b) => a + b, 0) / riskProbs.length) * 100)
+      : 0;
+
+    /* ── 5. Render charts ── */
+    loadingEl.style.display = 'none';
+    chartsEl.style.display = 'block';
+
+    makeDonut('chart-risk',
+      { labels: ['High Risk', 'Safe'], values: [highRisk, safeRisk] },
+      ['#ef4444', '#22c55e']
+    );
+    document.getElementById('ai-risk-center').textContent = highRisk;
+    document.getElementById('ai-risk-center').style.color = highRisk > 0 ? '#ef4444' : '#22c55e';
+
+    makeDonut('chart-complaint',
+      { labels: ['Likely Complaint', 'Low Risk'], values: [compRisk, compSafe] },
+      ['#f59e0b', '#22c55e']
+    );
+    document.getElementById('ai-complaint-center').textContent = compRisk;
+    document.getElementById('ai-complaint-center').style.color = compRisk > 0 ? '#f59e0b' : '#22c55e';
+
+    makeBar('chart-avgrisk', avgRiskPct);
+    const avgLabel = document.getElementById('ai-avgrisk-label');
+    avgLabel.textContent = avgRiskPct + '% avg risk';
+    avgLabel.style.color = avgRiskPct > 60 ? '#ef4444' : avgRiskPct > 35 ? '#f59e0b' : '#22c55e';
+  });
+</script>
+{% endblock %}

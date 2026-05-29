@@ -1,0 +1,9 @@
+# Datasets and zip archives stay in LFS (large, not needed at runtime)
+*.csv filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+
+# v1 models stay in LFS (not used by the app, large ~30MB)
+ai_model/v1/**/*.pkl filter=lfs diff=lfs merge=lfs -text
+
+# v2 models are committed as regular files (1.3MB total, needed by Railway)
+# NOTE: no LFS rule for v2 pkl — intentional for Railway compatibility

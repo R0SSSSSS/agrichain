@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.db
+*.db-shm
+*.db-wal
+
+# Virtual environment
+venv/
+
+# Dev/test scripts
+test_ai.py

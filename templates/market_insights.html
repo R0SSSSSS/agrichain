@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Market Insights{% endblock %}
+{% block page_title %}Market Insights{% endblock %}
+
+{% block content %}
+
+<div class="ph">
+  <div>
+    <div class="ph-title">Market Insights</div>
+    <div class="ph-sub">Peer price comparison for your listed products</div>
+  </div>
+  {% if current_user.role == 'farmer' %}
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </a>
+  {% endif %}
+</div>
+
+<div class="grid g4 mb-6">
+  <div class="stat">
+    <div class="stat-icon si-green">
+      <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Your Product Types</div>
+      <div class="stat-val">{{ market_summary.product_types }}</div>
+    </div>
+    <div class="stat-note text-muted">Grouped by product name and unit</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-blue">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Matched Products</div>
+      <div class="stat-val">{{ market_summary.comparable_groups }}</div>
+    </div>
+    <div class="stat-note text-muted">With peer prices available</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-amber">
+      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Peer Listings</div>
+      <div class="stat-val">{{ market_summary.peer_listing_count }}</div>
+    </div>
+    <div class="stat-note text-muted">Same product and unit only</div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon si-red">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div>
+      <div class="stat-lbl">Avg Peer Price</div>
+      <div class="stat-val">&#8369;{{ "%.2f"|format(market_summary.average_market_price) }}</div>
+    </div>
+    <div class="stat-note text-muted">Across matched peer groups</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <span class="card-hd-title">Price Comparison</span>
+  </div>
+
+  {% if market_rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Your Price</th>
+          <th>Peer Avg</th>
+          <th>Peer Price Range</th>
+          <th>Peer Listings</th>
+          <th>Position</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in market_rows %}
+        <tr>
+          <td data-label="Product">
+            <div class="font-bold">{{ row.name }}</div>
+            <div class="text-muted text-xs">Sold by {{ row.unit }}</div>
+          </td>
+          <td data-label="Your Price">
+            <span class="font-bold text-success">&#8369;{{ "%.2f"|format(row.own_avg_price) }} / {{ row.unit }}</span>
+            {% if row.own_min_price != row.own_max_price %}
+              <div class="text-muted text-xs">&#8369;{{ "%.2f"|format(row.own_min_price) }} - &#8369;{{ "%.2f"|format(row.own_max_price) }}</div>
+            {% endif %}
+          </td>
+          <td data-label="Peer Avg">
+            {% if row.market_avg_price %}
+              <span class="font-bold">&#8369;{{ "%.2f"|format(row.market_avg_price) }} / {{ row.unit }}</span>
+              <div class="text-muted text-xs">{{ "%+.1f"|format(row.price_difference) }}% vs peers</div>
+            {% else %}
+              <span class="text-muted">No peer price yet</span>
+            {% endif %}
+          </td>
+          <td data-label="Peer Range" class="text-muted text-sm">
+            {% if row.has_comparison %}
+              &#8369;{{ "%.2f"|format(row.min_price) }} - &#8369;{{ "%.2f"|format(row.max_price) }} / {{ row.unit }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td data-label="Peer Listings">
+            {% if row.has_comparison %}
+              <div class="font-bold">{{ row.listing_count }}</div>
+              <div class="text-muted text-xs">from {{ row.farmer_count }} farmer{{ 's' if row.farmer_count != 1 }}</div>
+            {% else %}
+              <span class="text-muted">None</span>
+            {% endif %}
+          </td>
+          <td data-label="Position">
+            <span class="badge b-{{ row.price_tone }}">{{ row.price_position }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:48px 24px">
+    <div class="font-bold" style="margin-bottom:6px">No product prices yet</div>
+    <div class="text-muted text-sm">Add products to compare prices with matching peer listings.</div>
+    <div class="mt-3">
+      <a href="{{ url_for('add_product') }}" class="btn btn-primary">Add Product</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

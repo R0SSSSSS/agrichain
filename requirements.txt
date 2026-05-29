@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
+psycopg[binary]
+python-dotenv
+PyMySQL
+scikit-learn
+xgboost
+pandas
+gunicorn
